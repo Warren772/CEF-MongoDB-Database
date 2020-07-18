@@ -1,0 +1,15 @@
+{
+  "name": "mongodb-server",
+  "version": "1.0.0",
+  "description": "MongoDB server for JSON communication with Chromium Embedded Framework (CEF). ",
+  "main": "main.js",
+  "dependencies": {
+    "mongodb": "^3.5.9"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
