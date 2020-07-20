@@ -1,5 +1,6 @@
-const username = 'USERNAME';
-const password = 'PASSWORD';
-const clusterUrl = 'URL'
+const username = 'CHANGEME';
+const password = 'CHANGEME';
+const clusterUrl = 'CHANGEME'
+const databaseName = 'CHANGEME'
 
-exports.url = "mongodb+srv://" + username + ":" + password + "@" + clusterUrl +"test?retryWrites=true&w=majority" ;
+exports.url = "mongodb://" + username + ":" + password + "@" + clusterUrl + "?authSource="  + databaseName ;
