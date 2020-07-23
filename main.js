@@ -20,8 +20,18 @@ databaseInit().then(()=>{
 		res.json(docs);
 	    });
 	});
+
+	app.get('/tempAccounts',function(req,res){
+	    const collection = _db.db(db.databaseName).collection("tempAccounts");
+	    collection.find().toArray(function(err,docs){
+		if(err) {
+		    throw err;
+		}
+		res.json(docs);
+	    });
+	});
 		
-	app.post('/addUser',function(req,res){
+	app.post('/addAccount',function(req,res){
 	    var site = req.body.site;
 	    var firstName= req.body.firstName;
 	    var lastName =req.body.lastName;
@@ -58,6 +68,43 @@ databaseInit().then(()=>{
 		    
 	    });
 	});
+
+	app.post('/addTempAccount',function(req,res){
+	    var site = req.body.site;
+	    var firstName= req.body.firstName;
+	    var lastName =req.body.lastName;
+	    var email= req.body.email;
+	    var pass = req.body.pass;
+	    var phone =req.body.phone;
+	    var overwrite;
+	    var account = {site: site,
+			   firstName: firstName,
+			   lastName:lastName,
+			   email:email,
+			   pass:pass,
+			   phone:phone};
+	    const collection = _db.db(db.databaseName).collection("tempAccounts");
+	    collection.find(account).toArray(function(err,result){
+		    if(err) throw err;
+		    if(result.length == 0){
+			collection.insertOne(account, (err,result)=> {
+			    if(err) throw (err);
+			    console.log('Document inserted!');
+			    res.write('true');
+			    res.end();
+			    return;
+			});
+		    }
+		    else{
+			res.send('Exact account already found in database');
+			return;
+		    }
+		    
+	    });
+	});
+
+
+	
 	
 	app.listen('3000',()=>{
 	    console.log('MongoDB webserver listening!');
@@ -80,7 +127,9 @@ function databaseInit(){
 	    if(error) throw error;
 	    console.log('Database initialized');
 	    checkAccountCollection(data).then(()=>{
-		resolve(); 
+		checkTempAccountCollection(data).then(()=>{
+		    resolve();
+		});
 	    });
 	})
     });
@@ -147,3 +196,30 @@ function checkAccountCollection(data){
 	})
     });
 };
+
+
+
+function checkTempAccountCollection(data){
+    return new Promise((resolve,reject)=>{
+	var collections = data.listCollections({name:"tempAccounts"}).toArray((err,cols)=>{
+	    if(cols.length === undefined){
+		data.createCollection("tempAccounts", {validator: {$jsonSchema: {
+		    bsonType: "object",
+		    required: [ "site"],
+		    properties: {
+			site:{
+			    bsonType:"string"
+			}
+		    }
+							      }
+								  }
+						      }, (err,result)=>{
+						      if(err) throw err;
+						      console.log('collection created');
+						      });
+	    }
+	    resolve();
+	});
+    });
+};
+		       
