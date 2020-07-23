@@ -21,6 +21,16 @@ databaseInit().then(()=>{
 	    });
 	});
 
+	app.get('/proxies',function(req,res){
+	    const collection = _db.db(db.databaseName).collection("proxies");
+	    collection.find().toArray(function(err,docs){
+		if(err) {
+		    throw err;
+		}
+		res.json(docs);
+	    });
+	});
+
 	app.get('/tempAccounts',function(req,res){
 	    const collection = _db.db(db.databaseName).collection("tempAccounts");
 	    collection.find().toArray(function(err,docs){
@@ -31,6 +41,44 @@ databaseInit().then(()=>{
 	    });
 	});
 		
+	app.post('/addTempAccount',function(req,res){
+	    var site = req.body.site;
+	    var firstName= req.body.firstName;
+	    var lastName =req.body.lastName;
+	    var email= req.body.email;
+	    var pass = req.body.pass;
+	    var phone =req.body.phone;
+	    var account = {site: site,
+			   firstName: firstName,
+			   lastName:lastName,
+			   email:email,
+			   pass:pass,
+			   phone:phone};
+	    if(!addTempUserValidation(account)){
+		res.send('ERROR IN POST REQEUEST');
+		return;
+	    }
+	    const collection = _db.db(db.databaseName).collection("tempAccounts");
+	    collection.find(account).toArray(function(err,result){
+		    if(err) throw err;
+		    if(result.length == 0){
+			collection.insertOne(account, (err,result)=> {
+			    if(err) throw (err);
+			    console.log('Document inserted!');
+			    res.write('true');
+			    res.end();
+			    return;
+			});
+		    }
+		    else{
+			res.send('Exact account already found in database');
+			return;
+		    }
+		    
+	    });
+	});
+
+
 	app.post('/addAccount',function(req,res){
 	    var site = req.body.site;
 	    var firstName= req.body.firstName;
@@ -38,7 +86,6 @@ databaseInit().then(()=>{
 	    var email= req.body.email;
 	    var pass = req.body.pass;
 	    var phone =req.body.phone;
-	    var overwrite;
 	    var account = {site: site,
 			   firstName: firstName,
 			   lastName:lastName,
@@ -69,25 +116,20 @@ databaseInit().then(()=>{
 	    });
 	});
 
-	app.post('/addTempAccount',function(req,res){
-	    var site = req.body.site;
-	    var firstName= req.body.firstName;
-	    var lastName =req.body.lastName;
-	    var email= req.body.email;
-	    var pass = req.body.pass;
-	    var phone =req.body.phone;
-	    var overwrite;
-	    var account = {site: site,
-			   firstName: firstName,
-			   lastName:lastName,
-			   email:email,
-			   pass:pass,
-			   phone:phone};
-	    const collection = _db.db(db.databaseName).collection("tempAccounts");
-	    collection.find(account).toArray(function(err,result){
+	app.post('/addProxy',function(req,res){
+	    var host = req.body.host;
+	    var authentication= req.body.authentication;
+	    var proxy = {host: host,
+			 authentication: authentication};
+	     if(!addProxyValidation(proxy)){
+		res.send('ERROR IN POST REQEUEST');
+		return;
+	    }
+	    const collection = _db.db(db.databaseName).collection("proxies");
+	    collection.find(proxy).toArray(function(err,result){
 		    if(err) throw err;
 		    if(result.length == 0){
-			collection.insertOne(account, (err,result)=> {
+			collection.insertOne(proxy, (err,result)=> {
 			    if(err) throw (err);
 			    console.log('Document inserted!');
 			    res.write('true');
@@ -96,7 +138,7 @@ databaseInit().then(()=>{
 			});
 		    }
 		    else{
-			res.send('Exact account already found in database');
+			res.send('Exact proxy already found in database');
 			return;
 		    }
 		    
@@ -128,7 +170,10 @@ function databaseInit(){
 	    console.log('Database initialized');
 	    checkAccountCollection(data).then(()=>{
 		checkTempAccountCollection(data).then(()=>{
-		    resolve();
+		    checkProxyCollection(data).then(()=>{
+			
+			resolve();
+		    });
 		});
 	    });
 	})
@@ -154,6 +199,25 @@ function addUserValidation(account){
     return true;
 };
 
+function addProxyValidation(proxy){
+    var properties = ['host','authentication'];
+    for(var i = 0; i < properties.length;i++){
+	if(proxy[properties[i]] === undefined){
+	    return false;
+	}
+    }
+    return true;
+};
+
+function addTempUserValidation(account){
+    var properties = ['site'];
+    for(var i = 0; i < properties.length;i++){
+	if(account[properties[i]] === undefined){
+	    return false;
+	}
+    }
+    return true;
+};
 
 
 
@@ -208,6 +272,33 @@ function checkTempAccountCollection(data){
 		    required: [ "site"],
 		    properties: {
 			site:{
+			    bsonType:"string"
+			}
+		    }
+							      }
+								  }
+						      }, (err,result)=>{
+						      if(err) throw err;
+						      console.log('collection created');
+						      });
+	    }
+	    resolve();
+	});
+    });
+};
+		       
+function checkProxyCollection(data){
+    return new Promise((resolve,reject)=>{
+	var collections = data.listCollections({name:"proxies"}).toArray((err,cols)=>{
+	    if(cols.length === undefined){
+		data.createCollection("proxies", {validator: {$jsonSchema: {
+		    bsonType: "object",
+		    required: [ "url","authentication"],
+		    properties: {
+			url:{
+			    bsonType:"string"
+			},
+			authentication:{
 			    bsonType:"string"
 			}
 		    }
