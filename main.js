@@ -13,7 +13,7 @@ databaseInit().then(()=>{
 	
 	app.get('/accounts',function(req,res){
 	    const collection = _db.db(db.databaseName).collection("accounts");
-	    collection.find.toArray(function(err,docs){
+	    collection.find().toArray(function(err,docs){
 		if(err) {
 		    throw err;
 		}
