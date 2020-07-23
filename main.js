@@ -11,6 +11,16 @@ databaseInit().then(()=>{
     try{
 	app.use(express.urlencoded());
 	
+	app.get('/accounts',function(req,res){
+	    const collection = _db.db(db.databaseName).collection("accounts");
+	    collection.find.toArray(function(err,docs){
+		if(err) {
+		    throw err;
+		}
+		res.json(docs);
+	    });
+	});
+		
 	app.post('/addUser',function(req,res){
 	    var site = req.body.site;
 	    var firstName= req.body.firstName;
@@ -26,32 +36,16 @@ databaseInit().then(()=>{
 			   pass:pass,
 			   phone:phone};
 	    if(!addUserValidation(account)){
-		console.log(account);
 		res.send('ERROR IN POST REQEUEST');
 		return;
 	    }
-	    
-	    if(typeof req.body.overwrite !== 'undefined'){
-		overwrite = req.body.overwrite;
-	    }
 	    const collection = _db.db(db.databaseName).collection("accounts");
-	    if(overwrite === 'true'){
-		collection.insertOne(
-		    account, (err,result)=> {
-			if(err) throw (err);
-			console.log('document inserted');
-			res.write('true');
-			res.end();
-		    });
-	    }
-	    else{
-		collection.find(account).toArray(function(err,result){
+	    collection.find(account).toArray(function(err,result){
 		    if(err) throw err;
-		    console.log(result);
 		    if(result.length == 0){
 			collection.insertOne(account, (err,result)=> {
 			    if(err) throw (err);
-			    console.log('document inserted');
+			    console.log('Document inserted!');
 			    res.write('true');
 			    res.end();
 			    return;
@@ -62,8 +56,7 @@ databaseInit().then(()=>{
 			return;
 		    }
 		    
-		});
-	    }
+	    });
 	});
 	
 	app.listen('3000',()=>{
