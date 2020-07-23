@@ -4,3 +4,4 @@ const clusterUrl = 'CHANGEME'
 const databaseName = 'CHANGEME'
 
 exports.url = "mongodb://" + username + ":" + password + "@" + clusterUrl + "?authSource="  + databaseName ;
+exports.databaseName = databaseName; 
