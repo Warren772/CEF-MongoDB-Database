@@ -1,6 +1,7 @@
 const MongoClient = require('mongodb').MongoClient;
 const db = require('./database.js');
 const express = require('express');
+const cors = require('cors');
 const app = express();
 let _db; 
 
@@ -9,9 +10,11 @@ let _db;
 
 databaseInit().then(()=>{
     try{
-	app.use(express.urlencoded());
+	app.use(express.urlencoded({extended:true}));
+	app.use(express.json());
+	app.use(express.raw());
 	
-	app.get('/accounts',function(req,res){
+	app.get('/accounts', cors(), function(req,res){
 	    const collection = _db.db(db.databaseName).collection("accounts");
 	    collection.find().toArray(function(err,docs){
 		if(err) {
@@ -21,7 +24,7 @@ databaseInit().then(()=>{
 	    });
 	});
 
-	app.get('/proxies',function(req,res){
+	app.get('/proxies', cors(), function(req,res){
 	    const collection = _db.db(db.databaseName).collection("proxies");
 	    collection.find().toArray(function(err,docs){
 		if(err) {
@@ -31,7 +34,42 @@ databaseInit().then(()=>{
 	    });
 	});
 
-	app.get('/tempAccounts',function(req,res){
+	app.post('/useAccount', cors() ,function(req,res){
+	     var site = req.body.site;
+	    var firstName= req.body.firstName;
+	    var lastName =req.body.lastName;
+	    var email= req.body.email;
+	    var pass = req.body.pass;
+	    var phone =req.body.phone;
+	    var account = {site: site,
+			   firstName: firstName,
+			   lastName:lastName,
+			   email:email,
+			   pass:pass,
+			   phone:phone};
+	    if(!addTempUserValidation(account)){
+		res.send('ERROR IN POST REQEUEST');
+		return;
+	    }
+	       const collection = _db.db(db.databaseName).collection("tempAccounts");
+	    collection.find(account).toArray(function(err,result){
+		    if(err) throw err;
+		    if(result.length ==1){
+			collection.deleteOne(account, (err,result)=> {
+			    if(err) throw (err);
+			    console.log('Document removed!');
+			    res.write('true');
+			    res.end();
+			    return;
+			});
+		    }
+		else{
+		    res.send('account not found');
+		}
+	    });
+	});
+
+	app.get('/tempAccounts', cors(), function(req,res){
 	    const collection = _db.db(db.databaseName).collection("tempAccounts");
 	    collection.find().toArray(function(err,docs){
 		if(err) {
@@ -41,7 +79,7 @@ databaseInit().then(()=>{
 	    });
 	});
 		
-	app.post('/addTempAccount',function(req,res){
+	app.post('/addTempAccount', cors(), function(req,res){
 	    var site = req.body.site;
 	    var firstName= req.body.firstName;
 	    var lastName =req.body.lastName;
@@ -58,7 +96,7 @@ databaseInit().then(()=>{
 		res.send('ERROR IN POST REQEUEST');
 		return;
 	    }
-	    const collection = _db.db(db.databaseName).collection("tempAccounts");
+	    	    const collection = _db.db(db.databaseName).collection("tempAccounts");
 	    collection.find(account).toArray(function(err,result){
 		    if(err) throw err;
 		    if(result.length == 0){
@@ -79,7 +117,7 @@ databaseInit().then(()=>{
 	});
 
 
-	app.post('/addAccount',function(req,res){
+	app.post('/addAccount',cors(),function(req,res){
 	    var site = req.body.site;
 	    var firstName= req.body.firstName;
 	    var lastName =req.body.lastName;
@@ -116,7 +154,7 @@ databaseInit().then(()=>{
 	    });
 	});
 
-	app.post('/addProxy',function(req,res){
+	app.post('/addProxy', cors() , function(req,res){
 	    var host = req.body.host;
 	    var authentication= req.body.authentication;
 	    var proxy = {host: host,
