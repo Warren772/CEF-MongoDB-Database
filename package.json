@@ -4,7 +4,7 @@
   "description": "MongoDB server for JSON communication with Chromium Embedded Framework (CEF). ",
   "main": "main.js",
   "dependencies": {
-    "mongodb": "^3.5.9"
+    "mongodb": "^3.7.4"
   },
   "devDependencies": {},
   "scripts": {
